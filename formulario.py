@@ -1,6 +1,7 @@
+import math
 import re
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import messagebox, ttk
 
 
 class FormularioRegistro:
@@ -111,6 +112,25 @@ class FormularioRegistro:
             width=15,
         ).pack(side="left", padx=10)
 
+        # Botón de Google debajo de los botones principales
+        self.google_icon = self._crear_icono_google()
+        tk.Button(
+            frame,
+            text="  Continuar con Google",
+            image=self.google_icon,
+            compound="left",
+            command=self.abrir_ventana_google,
+            bg="#ffffff",
+            fg="#3c4043",
+            activebackground="#f8f9fa",
+            font=("Arial", 10, "bold"),
+            relief="solid",
+            bd=1,
+            padx=14,
+            pady=6,
+            cursor="hand2",
+        ).grid(row=10, column=0, columnspan=2, pady=(0, 10))
+
         self.campos_widgets["nombre"].focus_set()
 
     def _configurar_atajos(self):
@@ -210,6 +230,67 @@ class FormularioRegistro:
         self.acepto.set(False)
         self.lbl_estado.config(text="")
         self.campos_widgets["nombre"].focus_set()
+
+    def _crear_icono_google(self) -> tk.PhotoImage:
+        """Genera un ícono 20x20 con la 'G' multicolor de Google."""
+        size = 20
+        cx = cy = (size - 1) / 2.0
+        img = tk.PhotoImage(width=size, height=size)
+        for y in range(size):
+            for x in range(size):
+                dx, dy = x - cx, y - cy
+                dist = math.hypot(dx, dy)
+                angulo = (math.degrees(math.atan2(-dy, dx)) + 360) % 360
+
+                # Barra horizontal derecha de la 'G'
+                en_barra = (cy - 1.6 <= y <= cy + 1.6) and (cx - 0.5 <= x <= cx + 8.5)
+                # Anillo exterior con abertura a la derecha (entre 18° y 48°)
+                en_anillo = (5.0 <= dist <= 8.8) and not (18 <= angulo <= 48)
+
+                if en_barra:
+                    img.put("#4285F4", (x, y))
+                elif en_anillo:
+                    if 48 < angulo <= 150:
+                        color = "#EA4335"  # Rojo (arriba)
+                    elif 150 < angulo <= 215:
+                        color = "#FBBC05"  # Amarillo (izquierda)
+                    elif 215 < angulo <= 315:
+                        color = "#34A853"  # Verde (abajo)
+                    else:
+                        color = "#4285F4"  # Azul (derecha inferior)
+                    img.put(color, (x, y))
+        return img
+
+    def abrir_ventana_google(self):
+        """Abre una ventana emergente con la barra de carga estándar de ttk."""
+        ventana = tk.Toplevel(self.root)
+        ventana.title("Google")
+        ventana.resizable(False, False)
+        ventana.transient(self.root)
+        ventana.grab_set()
+
+        ancho, alto = 300, 150
+        self.root.update_idletasks()
+        x = self.root.winfo_x() + (self.root.winfo_width() - ancho) // 2
+        y = self.root.winfo_y() + (self.root.winfo_height() - alto) // 2
+        ventana.geometry(f"{ancho}x{alto}+{x}+{y}")
+
+        tk.Label(
+            ventana,
+            text="Conectando con Google...",
+            font=("Arial", 11, "bold"),
+        ).pack(pady=(22, 12))
+
+        barra = ttk.Progressbar(ventana, mode="indeterminate", length=220)
+        barra.pack(pady=(0, 16))
+        barra.start(15)
+
+        tk.Button(
+            ventana,
+            text="Cancelar",
+            command=ventana.destroy,
+            width=12,
+        ).pack()
 
 
 if __name__ == "__main__":
